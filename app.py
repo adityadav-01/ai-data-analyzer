@@ -197,7 +197,7 @@ else:
     # ==================================================
     elif section == "Visualization":
 
-        st.markdown("## 📊 Advanced Data Visualization")
+        st.markdown("## Advanced Data Visualization")
 
         numeric_cols = df_cleaned.select_dtypes(include=["int64", "float64"]).columns
         categorical_cols = df_cleaned.select_dtypes(include=["object"]).columns
@@ -206,31 +206,31 @@ else:
             st.warning("No numeric columns found for visualization.")
         else:
 
-            st.subheader("1️⃣ Line Chart (Trend)")
+            st.subheader("1️ Line Chart (Trend)")
             line_col = st.selectbox("Select Column for Line Chart", numeric_cols, key="line")
             fig_line = px.line(df_cleaned, y=line_col)
             st.plotly_chart(fig_line, use_container_width=True)
 
             if len(categorical_cols) > 0:
-                st.subheader("2️⃣ Bar Chart (Category vs Value)")
+                st.subheader("2️ Bar Chart (Category vs Value)")
                 cat_col = st.selectbox("Select Category Column", categorical_cols, key="bar_cat")
                 num_col = st.selectbox("Select Value Column", numeric_cols, key="bar_num")
                 grouped = df_cleaned.groupby(cat_col)[num_col].mean().reset_index()
                 fig_bar = px.bar(grouped, x=cat_col, y=num_col)
                 st.plotly_chart(fig_bar, use_container_width=True)
 
-            st.subheader("3️⃣ Histogram (Distribution)")
+            st.subheader("3️ Histogram (Distribution)")
             hist_col = st.selectbox("Select Column for Histogram", numeric_cols, key="hist")
             fig_hist = px.histogram(df_cleaned, x=hist_col)
             st.plotly_chart(fig_hist, use_container_width=True)
 
-            st.subheader("4️⃣ Box Plot (Outlier Detection)")
+            st.subheader("4️ Box Plot (Outlier Detection)")
             box_col = st.selectbox("Select Column for Box Plot", numeric_cols, key="box")
             fig_box = px.box(df_cleaned, y=box_col)
             st.plotly_chart(fig_box, use_container_width=True)
 
             if len(numeric_cols) > 1:
-                st.subheader("5️⃣ Scatter Plot (Relationship)")
+                st.subheader("5️ Scatter Plot (Relationship)")
                 x_col = st.selectbox("X Axis", numeric_cols, key="scatter_x")
                 y_col = st.selectbox("Y Axis", numeric_cols, key="scatter_y")
                 if x_col != y_col:
@@ -238,24 +238,24 @@ else:
                     st.plotly_chart(fig_scatter, use_container_width=True)
 
             if len(numeric_cols) > 1:
-                st.subheader("6️⃣ Correlation Heatmap")
+                st.subheader("6️ Correlation Heatmap")
                 corr = df_cleaned[numeric_cols].corr()
                 fig, ax = plt.subplots(figsize=(10, 6))
                 sns.heatmap(corr, annot=True, cmap="viridis", ax=ax)
                 st.pyplot(fig)
 
             if len(categorical_cols) > 0:
-                st.subheader("7️⃣ Pie Chart (Composition)")
+                st.subheader("7️ Pie Chart (Composition)")
                 pie_col = st.selectbox("Select Column for Pie Chart", categorical_cols, key="pie")
                 fig_pie = px.pie(df_cleaned, names=pie_col)
                 st.plotly_chart(fig_pie, use_container_width=True)
 
-            st.subheader("8️⃣ Area Chart")
+            st.subheader("8️ Area Chart")
             area_col = st.selectbox("Select Column for Area Chart", numeric_cols, key="area")
             fig_area = px.area(df_cleaned, y=area_col)
             st.plotly_chart(fig_area, use_container_width=True)
 
-            st.subheader("9️⃣ Moving Average (Trend Smoothing)")
+            st.subheader("9️ Moving Average (Trend Smoothing)")
             ma_col = st.selectbox("Select Column for Moving Average", numeric_cols, key="ma")
             window = st.slider("Select Moving Average Window", 2, 30, 7)
             df_ma = df_cleaned.copy()
@@ -264,7 +264,7 @@ else:
             st.plotly_chart(fig_ma, use_container_width=True)
 
             if len(categorical_cols) > 0:
-                st.subheader("🔟 Treemap (Hierarchical View)")
+                st.subheader("10 Treemap (Hierarchical View)")
                 tree_cat = st.selectbox("Select Category for Treemap", categorical_cols, key="tree_cat")
                 tree_val = st.selectbox("Select Value for Treemap", numeric_cols, key="tree_val")
                 grouped_tree = df_cleaned.groupby(tree_cat)[tree_val].sum().reset_index()
