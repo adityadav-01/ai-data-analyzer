@@ -237,68 +237,61 @@ if uploaded_file is not None:
                     target_col: "y"
                 }).sort_values("ds")
 
-# ---------------- Train Test Split ----------------
-split_index = int(len(df_forecast) * 0.8)
-train = df_forecast.iloc[:split_index]
-test = df_forecast.iloc[split_index:]
+                # ---------------- Train Test Split ----------------
+                split_index = int(len(df_forecast) * 0.8)
+                train = df_forecast.iloc[:split_index]
+                test = df_forecast.iloc[split_index:]
 
-model = Prophet()
-model.fit(train)
+                model = Prophet()
+                model.fit(train)
 
-future = model.make_future_dataframe(periods=len(test))
-forecast = model.predict(future)
+                future = model.make_future_dataframe(periods=len(test))
+                forecast = model.predict(future)
 
-# ---------------- Performance Calculation ----------------
-predicted = forecast.iloc[-len(test):]["yhat"].values
-actual = test["y"].values
+                # ---------------- Performance Calculation ----------------
+                from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-mae = mean_absolute_error(actual, predicted)
-rmse = np.sqrt(mean_squared_error(actual, predicted))
-r2 = r2_score(actual, predicted)
+                predicted = forecast.iloc[-len(test):]["yhat"].values
+                actual = test["y"].values
 
-st.subheader("Model Accuracy")
+                mae = mean_absolute_error(actual, predicted)
+                rmse = np.sqrt(mean_squared_error(actual, predicted))
+                r2 = r2_score(actual, predicted)
 
-col1, col2, col3 = st.columns(3)
-col1.metric("MAE", round(mae, 2))
-col2.metric("RMSE", round(rmse, 2))
-col3.metric("R² Score", round(r2, 3))
+                st.subheader("Model Accuracy")
 
-# ---------------- Short Performance Message ----------------
-if r2 >= 0.9:
-    message = "Your model is Excellent"
-elif r2 >= 0.75:
-    message = "Your model is Good"
-elif r2 >= 0.5:
-    message = "Your model is Moderate"
-elif r2 >= 0:
-    message = "Your model is Weak"
-else:
-    message = "Your model is Poor"
+                col1, col2, col3 = st.columns(3)
+                col1.metric("MAE", round(mae, 2))
+                col2.metric("RMSE", round(rmse, 2))
+                col3.metric("R² Score", round(r2, 3))
 
-st.success(message)
+                # ---------------- Short Performance Message ----------------
+                if r2 >= 0.9:
+                    message = "Your model is Excellent"
+                elif r2 >= 0.75:
+                    message = "Your model is Good"
+                elif r2 >= 0.5:
+                    message = "Your model is Moderate"
+                elif r2 >= 0:
+                    message = "Your model is Weak"
+                else:
+                    message = "Your model is Poor"
 
-# ---------------- Final Forecast Plot (2 Years) ----------------
-future_full = model.make_future_dataframe(periods=730)
-forecast_full = model.predict(future_full)
+                st.success(message)
 
-fig = px.line(forecast_full, x="ds", y="yhat", title="Forecast Trend")
-st.plotly_chart(fig, use_container_width=True)
+                # ---------------- Final 2 Year Forecast ----------------
+                future_full = model.make_future_dataframe(periods=730)
+                forecast_full = model.predict(future_full)
 
-fig2 = model.plot_components(forecast_full)
-st.pyplot(fig2)
-
-
-                fig = px.line(forecast, x="ds", y="yhat", title="Forecast Trend")
+                fig = px.line(forecast_full, x="ds", y="yhat", title="Forecast Trend")
                 st.plotly_chart(fig, use_container_width=True)
 
-                fig2 = model.plot_components(forecast)
+                fig2 = model.plot_components(forecast_full)
                 st.pyplot(fig2)
 
         else:
             st.warning("No valid time series structure found.")
 
-else:
-    st.info("Upload dataset to begin.")
 
 # ==================================================
 # FOOTER
