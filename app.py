@@ -137,7 +137,7 @@ if uploaded_file is not None:
             st.pyplot(fig)
 
     # ==================================================
-    # SECTION 4 — Forecasting + Performance
+    # SECTION 4 — Forecasting + Accuracy
     # ==================================================
     if section == "Forecasting":
 
@@ -169,29 +169,39 @@ if uploaded_file is not None:
                     target_col: "y"
                 }).sort_values("ds")
 
-                model = Prophet()
-                model.fit(df_forecast)
+                # ---------------- Train Test Split ----------------
+                split_index = int(len(df_forecast) * 0.8)
+                train = df_forecast.iloc[:split_index]
+                test = df_forecast.iloc[split_index:]
 
-                future = model.make_future_dataframe(periods=730)
+                model = Prophet()
+                model.fit(train)
+
+                future = model.make_future_dataframe(periods=len(test))
                 forecast = model.predict(future)
 
-                fig = px.line(forecast, x="ds", y="yhat", title="Forecast Trend")
-                st.plotly_chart(fig, use_container_width=True)
+                predicted = forecast.iloc[-len(test):]["yhat"].values
+                actual = test["y"].values
 
-                # --------- Performance Metrics ----------
-                y_true = df_forecast["y"]
-                y_pred = forecast["yhat"][:len(y_true)]
+                # ---------------- Metrics ----------------
+                mae = mean_absolute_error(actual, predicted)
+                rmse = np.sqrt(mean_squared_error(actual, predicted))
+                mape = np.mean(np.abs((actual - predicted) / actual)) * 100
 
-                mae = mean_absolute_error(y_true, y_pred)
-                rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-                r2 = r2_score(y_true, y_pred)
+                # R2 Calculation
+                ss_res = np.sum((actual - predicted) ** 2)
+                ss_tot = np.sum((actual - np.mean(actual)) ** 2)
+                r2 = 1 - (ss_res / ss_tot)
 
                 st.subheader("Model Performance")
-                st.write(f"MAE: {round(mae,2)}")
-                st.write(f"RMSE: {round(rmse,2)}")
-                st.write(f"R² Score: {round(r2,3)}")
 
-                # -------- Performance Rating ----------
+                col1, col2, col3, col4 = st.columns(4)
+                col1.metric("MAE", round(mae, 2))
+                col2.metric("RMSE", round(rmse, 2))
+                col3.metric("MAPE (%)", round(mape, 2))
+                col4.metric("R² Score", round(r2, 3))
+
+                # ---------------- Model Rating ----------------
                 if r2 >= 0.9:
                     rating = "Excellent Model"
                 elif r2 >= 0.75:
@@ -205,11 +215,21 @@ if uploaded_file is not None:
 
                 st.success(f"Model Quality: {rating}")
 
+                # ---------------- Forecast Plot ----------------
+                fig = px.line(
+                    forecast,
+                    x="ds",
+                    y=["yhat", "yhat_lower", "yhat_upper"],
+                    title="Forecast with Confidence Interval"
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+                fig2 = model.plot_components(forecast)
+                st.pyplot(fig2)
+
         else:
             st.warning("No valid time series structure found.")
 
-else:
-    st.info("Upload dataset to begin.")
 
 # ==================================================
 # FOOTER
