@@ -5,29 +5,13 @@ import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
 from prophet import Prophet
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # --------------------------------------------------
 # PAGE CONFIG
 # --------------------------------------------------
 st.set_page_config(page_title="AI Data Analyzer", layout="wide")
-
-st.markdown("""
-    <style>
-    .main-title {
-        font-size:32px;
-        font-weight:600;
-        margin-bottom:10px;
-    }
-    .section-title {
-        font-size:22px;
-        margin-top:20px;
-        margin-bottom:10px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown('<div class="main-title">AI Data Analyzer Application</div>', unsafe_allow_html=True)
+st.title("AI Data Analyzer Application")
 
 # --------------------------------------------------
 # SIDEBAR
@@ -48,9 +32,7 @@ uploaded_file = st.sidebar.file_uploader(
 # --------------------------------------------------
 if uploaded_file is not None:
 
-    # -------------------------------
-    # SAFE DATA READING
-    # -------------------------------
+    # ---------------- SAFE DATA READING ----------------
     if uploaded_file.name.endswith(".csv"):
         try:
             df = pd.read_csv(uploaded_file, encoding="utf-8")
@@ -60,9 +42,7 @@ if uploaded_file is not None:
     else:
         df = pd.read_excel(uploaded_file)
 
-    # -------------------------------
-    # FIX DUPLICATE COLUMNS
-    # -------------------------------
+    # ---------------- FIX DUPLICATE COLUMNS ----------------
     cols = pd.Series(df.columns)
     for dup in cols[cols.duplicated()].unique():
         idxs = cols[cols == dup].index.tolist()
@@ -71,9 +51,6 @@ if uploaded_file is not None:
                 cols[idx] = f"{dup}_{i}"
     df.columns = cols
 
-    # -------------------------------
-    # SESSION STATE
-    # -------------------------------
     if "cleaned_df" not in st.session_state:
         st.session_state.cleaned_df = df.copy()
 
@@ -83,23 +60,19 @@ if uploaded_file is not None:
     # SECTION 1 — Upload
     # ==================================================
     if section == "Upload Data":
-        st.markdown('<div class="section-title">Dataset Preview</div>', unsafe_allow_html=True)
+        st.subheader("Dataset Preview")
         st.dataframe(df_cleaned.head())
         st.write("Shape:", df_cleaned.shape)
-        st.write("Columns:", df_cleaned.columns.tolist())
 
     # ==================================================
     # SECTION 2 — Data Overview + Cleaning
     # ==================================================
     if section == "Data Overview":
 
-        st.markdown('<div class="section-title">Data Types</div>', unsafe_allow_html=True)
-        st.write(df_cleaned.dtypes)
-
-        st.markdown('<div class="section-title">Statistical Summary</div>', unsafe_allow_html=True)
+        st.subheader("Statistical Summary")
         st.write(df_cleaned.describe())
 
-        st.markdown('<div class="section-title">Missing Values</div>', unsafe_allow_html=True)
+        st.subheader("Missing Values")
 
         missing = df_cleaned.isnull().sum()
         missing_percent = (missing / len(df_cleaned)) * 100
@@ -113,11 +86,12 @@ if uploaded_file is not None:
         st.dataframe(missing_df)
 
         clean_option = st.selectbox(
-            "Select Missing Value Handling Method",
+            "Missing Value Handling",
             ["Fill with Mean", "Fill with Median", "Fill with Mode", "Drop Rows"]
         )
 
         if st.button("Apply Cleaning"):
+
             if clean_option == "Fill with Mean":
                 df_cleaned = df_cleaned.fillna(df_cleaned.mean(numeric_only=True))
                 df_cleaned = df_cleaned.fillna("Unknown")
@@ -136,24 +110,14 @@ if uploaded_file is not None:
             st.session_state.cleaned_df = df_cleaned
             st.success("Cleaning Applied Successfully")
 
-        cleaned_csv = df_cleaned.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="Download Cleaned Dataset",
-            data=cleaned_csv,
-            file_name="cleaned_dataset.csv",
-            mime="text/csv"
-        )
-
     # ==================================================
     # SECTION 3 — Visualization
     # ==================================================
     if section == "Visualization":
 
         numeric_cols = df_cleaned.select_dtypes(include=["int64", "float64"]).columns
-        categorical_cols = df_cleaned.select_dtypes(include=["object"]).columns
 
         if len(numeric_cols) > 0:
-
             selected_col = st.selectbox("Select Numeric Column", numeric_cols)
 
             col1, col2, col3, col4 = st.columns(4)
@@ -162,36 +126,18 @@ if uploaded_file is not None:
             col3.metric("Min", round(df_cleaned[selected_col].min(), 2))
             col4.metric("Std Dev", round(df_cleaned[selected_col].std(), 2))
 
-            fig_line = px.line(df_cleaned, y=selected_col, title="Trend Analysis")
+            fig_line = px.line(df_cleaned, y=selected_col, title="Trend")
             st.plotly_chart(fig_line, use_container_width=True)
 
-            fig_hist = px.histogram(df_cleaned, x=selected_col)
-            st.plotly_chart(fig_hist, use_container_width=True)
-
         if len(numeric_cols) > 1:
-            st.subheader("Scatter Plot")
-            x_col = st.selectbox("X Axis", numeric_cols, key="scatter_x")
-            y_col = st.selectbox("Y Axis", numeric_cols, key="scatter_y")
-
-            if x_col != y_col:
-                temp_df = df_cleaned[[x_col, y_col]].dropna()
-                fig_scatter = px.scatter(temp_df, x=x_col, y=y_col)
-                st.plotly_chart(fig_scatter, use_container_width=True)
-
             st.subheader("Correlation Heatmap")
             corr = df_cleaned[numeric_cols].corr()
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.heatmap(corr, annot=True, cmap="viridis", ax=ax)
             st.pyplot(fig)
 
-        if len(categorical_cols) > 0:
-            st.subheader("Categorical Distribution")
-            cat_col = st.selectbox("Categorical Column", categorical_cols)
-            fig_pie = px.pie(df_cleaned, names=cat_col)
-            st.plotly_chart(fig_pie, use_container_width=True)
-
     # ==================================================
-    # SECTION 4 — Forecasting + Accuracy
+    # SECTION 4 — Forecasting + Performance
     # ==================================================
     if section == "Forecasting":
 
@@ -223,39 +169,41 @@ if uploaded_file is not None:
                     target_col: "y"
                 }).sort_values("ds")
 
-                # ---------------- Train Test Split ----------------
-                split_index = int(len(df_forecast) * 0.8)
-                train = df_forecast.iloc[:split_index]
-                test = df_forecast.iloc[split_index:]
-
                 model = Prophet()
-                model.fit(train)
+                model.fit(df_forecast)
 
-                future = model.make_future_dataframe(periods=len(test))
+                future = model.make_future_dataframe(periods=730)
                 forecast = model.predict(future)
 
-                predicted = forecast.iloc[-len(test):]["yhat"].values
-                actual = test["y"].values
-
-                # ---------------- Metrics ----------------
-                mae = mean_absolute_error(actual, predicted)
-                rmse = np.sqrt(mean_squared_error(actual, predicted))
-                mape = np.mean(np.abs((actual - predicted) / actual)) * 100
-
-                st.subheader("Model Performance")
-                col1, col2, col3 = st.columns(3)
-                col1.metric("MAE", round(mae, 2))
-                col2.metric("RMSE", round(rmse, 2))
-                col3.metric("MAPE (%)", round(mape, 2))
-
-                # ---------------- Forecast Plot ----------------
-                fig = px.line(forecast, x="ds",
-                              y=["yhat", "yhat_lower", "yhat_upper"],
-                              title="Forecast with Confidence Interval")
+                fig = px.line(forecast, x="ds", y="yhat", title="Forecast Trend")
                 st.plotly_chart(fig, use_container_width=True)
 
-                fig2 = model.plot_components(forecast)
-                st.pyplot(fig2)
+                # --------- Performance Metrics ----------
+                y_true = df_forecast["y"]
+                y_pred = forecast["yhat"][:len(y_true)]
+
+                mae = mean_absolute_error(y_true, y_pred)
+                rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+                r2 = r2_score(y_true, y_pred)
+
+                st.subheader("Model Performance")
+                st.write(f"MAE: {round(mae,2)}")
+                st.write(f"RMSE: {round(rmse,2)}")
+                st.write(f"R² Score: {round(r2,3)}")
+
+                # -------- Performance Rating ----------
+                if r2 >= 0.9:
+                    rating = "Excellent Model"
+                elif r2 >= 0.75:
+                    rating = "Good Model"
+                elif r2 >= 0.5:
+                    rating = "Moderate Model"
+                elif r2 >= 0:
+                    rating = "Weak Model"
+                else:
+                    rating = "Poor Model"
+
+                st.success(f"Model Quality: {rating}")
 
         else:
             st.warning("No valid time series structure found.")
@@ -263,16 +211,16 @@ if uploaded_file is not None:
 else:
     st.info("Upload dataset to begin.")
 
-# --------------------------------------------------
+# ==================================================
 # FOOTER
-# --------------------------------------------------
+# ==================================================
 st.markdown("---")
 st.markdown(
     """
     <div style='text-align:center; font-size:15px; padding:10px;'>
         <b>Aditya Yadav</b> &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;
-        📞 6306512207 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;
-        ✉ adityadav757@gmail.com
+        6306512207 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;
+        adityadav757@gmail.com
     </div>
     """,
     unsafe_allow_html=True
