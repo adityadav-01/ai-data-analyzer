@@ -51,53 +51,66 @@ st.markdown('<div class="welcome-title">Welcome to Our AI Data Analyzer</div>', 
 st.markdown("---")
 
 # --------------------------------------------------
-# INTRODUCTION SECTION
+# INTRODUCTION SECTION (Attractive Version)
 # --------------------------------------------------
 
-st.markdown("## About This Application")
-
 st.markdown("""
-Welcome to the AI Data Analyzer Web Application.
+<style>
+.info-box {
+    padding:20px;
+    border-radius:12px;
+    background: rgba(0, 201, 255, 0.08);
+    border: 1px solid rgba(0, 201, 255, 0.3);
+    margin-bottom:20px;
+}
+.info-title {
+    font-size:18px;
+    font-weight:600;
+    margin-bottom:8px;
+}
+.info-text {
+    font-size:14px;
+    color:#CCCCCC;
+}
+</style>
+""", unsafe_allow_html=True)
 
-This platform allows you to upload any structured CSV or Excel dataset and perform:
+st.markdown("## Smart Data. Smart Decisions.")
 
-• Data Cleaning  
-• Statistical Analysis  
-• Advanced Visualizations  
-• Correlation Analysis  
-• AI-Based Time Series Forecasting  
+col1, col2, col3 = st.columns(3)
 
-The system automatically adapts to your dataset structure.
-""")
+with col1:
+    st.markdown("""
+    <div class="info-box">
+        <div class="info-title"> What This App Does</div>
+        <div class="info-text">
+        Cleans your data, generates visual insights, and performs AI-based forecasting automatically.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown("---")
+with col2:
+    st.markdown("""
+    <div class="info-box">
+        <div class="info-title"> Minimum Requirements</div>
+        <div class="info-text">
+        ✔ At least 1 numeric column  
+        ✔ Date + numeric column for forecasting  
+        ✔ 20+ rows recommended
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown("## Minimum Dataset Requirements")
-
-st.markdown("""
-### 🔹 For Data Analysis & Visualization:
-• At least **one numeric column** (int or float)  
-• Categorical columns are optional but recommended  
-
-### 🔹 For Forecasting:
-• One **Date column** (YYYY-MM-DD format preferred)  
-• One **Numeric column** for prediction  
-• At least 20–30 records recommended  
-• Data should follow a consistent time interval (daily, monthly, yearly)
-""")
-
-st.markdown("---")
-
-st.markdown("## 🚀 How It Works")
-
-st.markdown("""
-1️ Upload your dataset from the sidebar  
-2️ Review and clean missing values  
-3️ Explore visualizations  
-4️ Generate AI-based forecast (if time-series data exists)  
-
-The system uses Pandas for data processing, Plotly for visualization, and Prophet for forecasting.
-""")
+with col3:
+    st.markdown("""
+    <div class="info-box">
+        <div class="info-title">⚙️ How It Works</div>
+        <div class="info-text">
+        Upload → Clean → Visualize → Forecast  
+        All powered by Pandas & AI.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("---")
 
