@@ -5,6 +5,7 @@ import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
 from prophet import Prophet
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 # --------------------------------------------------
 # PAGE CONFIG
@@ -53,13 +54,9 @@ if uploaded_file is not None:
     if uploaded_file.name.endswith(".csv"):
         try:
             df = pd.read_csv(uploaded_file, encoding="utf-8")
-        except UnicodeDecodeError:
+        except:
             uploaded_file.seek(0)
-            try:
-                df = pd.read_csv(uploaded_file, encoding="latin1")
-            except:
-                uploaded_file.seek(0)
-                df = pd.read_csv(uploaded_file, encoding="ISO-8859-1")
+            df = pd.read_csv(uploaded_file, encoding="latin1")
     else:
         df = pd.read_excel(uploaded_file)
 
@@ -86,7 +83,6 @@ if uploaded_file is not None:
     # SECTION 1 — Upload
     # ==================================================
     if section == "Upload Data":
-
         st.markdown('<div class="section-title">Dataset Preview</div>', unsafe_allow_html=True)
         st.dataframe(df_cleaned.head())
         st.write("Shape:", df_cleaned.shape)
@@ -103,7 +99,6 @@ if uploaded_file is not None:
         st.markdown('<div class="section-title">Statistical Summary</div>', unsafe_allow_html=True)
         st.write(df_cleaned.describe())
 
-        # ---------------- Missing Values ----------------
         st.markdown('<div class="section-title">Missing Values</div>', unsafe_allow_html=True)
 
         missing = df_cleaned.isnull().sum()
@@ -123,7 +118,6 @@ if uploaded_file is not None:
         )
 
         if st.button("Apply Cleaning"):
-
             if clean_option == "Fill with Mean":
                 df_cleaned = df_cleaned.fillna(df_cleaned.mean(numeric_only=True))
                 df_cleaned = df_cleaned.fillna("Unknown")
@@ -142,7 +136,6 @@ if uploaded_file is not None:
             st.session_state.cleaned_df = df_cleaned
             st.success("Cleaning Applied Successfully")
 
-        # Download cleaned data
         cleaned_csv = df_cleaned.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="Download Cleaned Dataset",
@@ -176,20 +169,15 @@ if uploaded_file is not None:
             st.plotly_chart(fig_hist, use_container_width=True)
 
         if len(numeric_cols) > 1:
-
             st.subheader("Scatter Plot")
-
             x_col = st.selectbox("X Axis", numeric_cols, key="scatter_x")
             y_col = st.selectbox("Y Axis", numeric_cols, key="scatter_y")
 
             if x_col != y_col:
                 temp_df = df_cleaned[[x_col, y_col]].dropna()
+                fig_scatter = px.scatter(temp_df, x=x_col, y=y_col)
+                st.plotly_chart(fig_scatter, use_container_width=True)
 
-                if len(temp_df) > 0:
-                    fig_scatter = px.scatter(temp_df, x=x_col, y=y_col)
-                    st.plotly_chart(fig_scatter, use_container_width=True)
-
-        if len(numeric_cols) > 1:
             st.subheader("Correlation Heatmap")
             corr = df_cleaned[numeric_cols].corr()
             fig, ax = plt.subplots(figsize=(10, 6))
@@ -203,7 +191,7 @@ if uploaded_file is not None:
             st.plotly_chart(fig_pie, use_container_width=True)
 
     # ==================================================
-    # SECTION 4 — Forecasting
+    # SECTION 4 — Forecasting + Accuracy
     # ==================================================
     if section == "Forecasting":
 
@@ -224,7 +212,7 @@ if uploaded_file is not None:
             date_col = st.selectbox("Date Column", date_cols)
             target_col = st.selectbox("Target Column", numeric_cols)
 
-            if st.button("Generate 2 Year Forecast"):
+            if st.button("Generate Forecast"):
 
                 df_forecast = df_cleaned[[date_col, target_col]].copy()
                 df_forecast[date_col] = pd.to_datetime(df_forecast[date_col], errors="coerce")
@@ -235,13 +223,35 @@ if uploaded_file is not None:
                     target_col: "y"
                 }).sort_values("ds")
 
-                model = Prophet()
-                model.fit(df_forecast)
+                # ---------------- Train Test Split ----------------
+                split_index = int(len(df_forecast) * 0.8)
+                train = df_forecast.iloc[:split_index]
+                test = df_forecast.iloc[split_index:]
 
-                future = model.make_future_dataframe(periods=730)
+                model = Prophet()
+                model.fit(train)
+
+                future = model.make_future_dataframe(periods=len(test))
                 forecast = model.predict(future)
 
-                fig = px.line(forecast, x="ds", y="yhat", title="Forecast Trend")
+                predicted = forecast.iloc[-len(test):]["yhat"].values
+                actual = test["y"].values
+
+                # ---------------- Metrics ----------------
+                mae = mean_absolute_error(actual, predicted)
+                rmse = np.sqrt(mean_squared_error(actual, predicted))
+                mape = np.mean(np.abs((actual - predicted) / actual)) * 100
+
+                st.subheader("Model Performance")
+                col1, col2, col3 = st.columns(3)
+                col1.metric("MAE", round(mae, 2))
+                col2.metric("RMSE", round(rmse, 2))
+                col3.metric("MAPE (%)", round(mape, 2))
+
+                # ---------------- Forecast Plot ----------------
+                fig = px.line(forecast, x="ds",
+                              y=["yhat", "yhat_lower", "yhat_upper"],
+                              title="Forecast with Confidence Interval")
                 st.plotly_chart(fig, use_container_width=True)
 
                 fig2 = model.plot_components(forecast)
@@ -253,9 +263,9 @@ if uploaded_file is not None:
 else:
     st.info("Upload dataset to begin.")
 
-# ==================================================
+# --------------------------------------------------
 # FOOTER
-# ==================================================
+# --------------------------------------------------
 st.markdown("---")
 st.markdown(
     """
