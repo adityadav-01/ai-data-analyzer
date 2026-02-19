@@ -192,27 +192,142 @@ else:
                 mime="text/csv"
             )
 
+# ==================================================
+# SECTION 3 — Visualization (Advanced)
+# ==================================================
+elif section == "Visualization":
+
+    st.markdown("## 📊 Advanced Data Visualization")
+
+    numeric_cols = df_cleaned.select_dtypes(include=["int64", "float64"]).columns
+    categorical_cols = df_cleaned.select_dtypes(include=["object"]).columns
+
+    if len(numeric_cols) == 0:
+        st.warning("No numeric columns found for visualization.")
+    else:
+
+        # -------------------------------
+        # 1️⃣ Line Chart
+        # -------------------------------
+        st.subheader("1️⃣ Line Chart (Trend)")
+        line_col = st.selectbox("Select Column for Line Chart", numeric_cols, key="line")
+        fig_line = px.line(df_cleaned, y=line_col)
+        st.plotly_chart(fig_line, use_container_width=True)
+
+        # -------------------------------
+        # 2️⃣ Bar Chart
+        # -------------------------------
+        if len(categorical_cols) > 0:
+            st.subheader("2️⃣ Bar Chart (Category vs Value)")
+            cat_col = st.selectbox("Select Category Column", categorical_cols, key="bar_cat")
+            num_col = st.selectbox("Select Value Column", numeric_cols, key="bar_num")
+            grouped = df_cleaned.groupby(cat_col)[num_col].mean().reset_index()
+            fig_bar = px.bar(grouped, x=cat_col, y=num_col)
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+        # -------------------------------
+        # 3️⃣ Histogram
+        # -------------------------------
+        st.subheader("3️⃣ Histogram (Distribution)")
+        hist_col = st.selectbox("Select Column for Histogram", numeric_cols, key="hist")
+        fig_hist = px.histogram(df_cleaned, x=hist_col)
+        st.plotly_chart(fig_hist, use_container_width=True)
+
+        # -------------------------------
+        # 4️⃣ Box Plot
+        # -------------------------------
+        st.subheader("4️⃣ Box Plot (Outlier Detection)")
+        box_col = st.selectbox("Select Column for Box Plot", numeric_cols, key="box")
+        fig_box = px.box(df_cleaned, y=box_col)
+        st.plotly_chart(fig_box, use_container_width=True)
+
+        # -------------------------------
+        # 5️⃣ Scatter Plot
+        # -------------------------------
+        if len(numeric_cols) > 1:
+            st.subheader("5️⃣ Scatter Plot (Relationship)")
+            x_col = st.selectbox("X Axis", numeric_cols, key="scatter_x")
+            y_col = st.selectbox("Y Axis", numeric_cols, key="scatter_y")
+            if x_col != y_col:
+                fig_scatter = px.scatter(df_cleaned, x=x_col, y=y_col)
+                st.plotly_chart(fig_scatter, use_container_width=True)
+
+        # -------------------------------
+        # 6️⃣ Correlation Heatmap
+        # -------------------------------
+        if len(numeric_cols) > 1:
+            st.subheader("6️⃣ Correlation Heatmap")
+            corr = df_cleaned[numeric_cols].corr()
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.heatmap(corr, annot=True, cmap="viridis", ax=ax)
+            st.pyplot(fig)
+
+        # -------------------------------
+        # 7️⃣ Pie Chart
+        # -------------------------------
+        if len(categorical_cols) > 0:
+            st.subheader("7️⃣ Pie Chart (Composition)")
+            pie_col = st.selectbox("Select Column for Pie Chart", categorical_cols, key="pie")
+            fig_pie = px.pie(df_cleaned, names=pie_col)
+            st.plotly_chart(fig_pie, use_container_width=True)
+
+        # -------------------------------
+        # 8️⃣ Area Chart
+        # -------------------------------
+        st.subheader("8️⃣ Area Chart")
+        area_col = st.selectbox("Select Column for Area Chart", numeric_cols, key="area")
+        fig_area = px.area(df_cleaned, y=area_col)
+        st.plotly_chart(fig_area, use_container_width=True)
+
+        # -------------------------------
+        # 9️⃣ Moving Average Chart
+        # -------------------------------
+        st.subheader("9️⃣ Moving Average (Trend Smoothing)")
+        ma_col = st.selectbox("Select Column for Moving Average", numeric_cols, key="ma")
+        window = st.slider("Select Moving Average Window", 2, 30, 7)
+        df_ma = df_cleaned.copy()
+        df_ma["Moving Average"] = df_ma[ma_col].rolling(window=window).mean()
+        fig_ma = px.line(df_ma, y=[ma_col, "Moving Average"])
+        st.plotly_chart(fig_ma, use_container_width=True)
+
+        # -------------------------------
+        # 🔟 Treemap
+        # -------------------------------
+        if len(categorical_cols) > 0:
+            st.subheader("🔟 Treemap (Hierarchical View)")
+            tree_cat = st.selectbox("Select Category for Treemap", categorical_cols, key="tree_cat")
+            tree_val = st.selectbox("Select Value for Treemap", numeric_cols, key="tree_val")
+            grouped_tree = df_cleaned.groupby(tree_cat)[tree_val].sum().reset_index()
+            fig_tree = px.treemap(grouped_tree, path=[tree_cat], values=tree_val)
+            st.plotly_chart(fig_tree, use_container_width=True)
+
     # ==================================================
-    # SECTION 3 — Visualization
+    # 💬 DOUBT CHAT SECTION
     # ==================================================
-    elif section == "Visualization":
+    st.markdown("---")
+    st.markdown("## 💬 Visualization Doubt Chat")
 
-        numeric_cols = df_cleaned.select_dtypes(include=["int64", "float64"]).columns
+    user_doubt = st.text_area("Ask your visualization doubt here:")
 
-        if len(numeric_cols) > 0:
-            selected_col = st.selectbox("Select Numeric Column", numeric_cols)
+    if st.button("Get Answer"):
+        if user_doubt.strip() == "":
+            st.warning("Please enter your question.")
+        else:
+            st.success("Here is guidance:")
+            st.write("""
+• Use Line Chart for trends over time  
+• Use Bar Chart for comparing categories  
+• Use Histogram for distribution  
+• Use Box Plot for outlier detection  
+• Use Scatter Plot for relationship between variables  
+• Use Heatmap for correlation analysis  
+• Use Pie Chart for proportions  
+• Use Moving Average for smoothing noisy data  
+• Use Treemap for hierarchical category breakdown  
 
-            col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Mean", round(df_cleaned[selected_col].mean(), 2))
-            col2.metric("Max", round(df_cleaned[selected_col].max(), 2))
-            col3.metric("Min", round(df_cleaned[selected_col].min(), 2))
-            col4.metric("Std Dev", round(df_cleaned[selected_col].std(), 2))
+If you describe your dataset, I can suggest the best chart type.
+""")
 
-            fig_line = px.line(df_cleaned, y=selected_col)
-            st.plotly_chart(fig_line, use_container_width=True)
-
-            fig_hist = px.histogram(df_cleaned, x=selected_col)
-            st.plotly_chart(fig_hist, use_container_width=True)
 
     # ==================================================
     # SECTION 4 — Forecasting
