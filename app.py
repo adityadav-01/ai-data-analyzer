@@ -5,15 +5,28 @@ import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
 from prophet import Prophet
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
 
 # --------------------------------------------------
 # PAGE CONFIG
 # --------------------------------------------------
 st.set_page_config(page_title="AI Data Analyzer", layout="wide")
-st.title("AI Data Analyzer Application")
+
+st.markdown("""
+    <style>
+    .main-title {
+        font-size:32px;
+        font-weight:600;
+        margin-bottom:10px;
+    }
+    .section-title {
+        font-size:22px;
+        margin-top:20px;
+        margin-bottom:10px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="main-title">AI Data Analyzer Application</div>', unsafe_allow_html=True)
 
 # --------------------------------------------------
 # SIDEBAR
@@ -34,9 +47,9 @@ uploaded_file = st.sidebar.file_uploader(
 # --------------------------------------------------
 if uploaded_file is not None:
 
-    # --------------------------------------------------
-    # SAFE DATA READING (Handles Encoding Errors)
-    # --------------------------------------------------
+    # -------------------------------
+    # SAFE DATA READING
+    # -------------------------------
     if uploaded_file.name.endswith(".csv"):
         try:
             df = pd.read_csv(uploaded_file, encoding="utf-8")
@@ -50,9 +63,9 @@ if uploaded_file is not None:
     else:
         df = pd.read_excel(uploaded_file)
 
-    # --------------------------------------------------
-    # FIX DUPLICATE COLUMN NAMES
-    # --------------------------------------------------
+    # -------------------------------
+    # FIX DUPLICATE COLUMNS
+    # -------------------------------
     cols = pd.Series(df.columns)
     for dup in cols[cols.duplicated()].unique():
         idxs = cols[cols == dup].index.tolist()
@@ -61,46 +74,75 @@ if uploaded_file is not None:
                 cols[idx] = f"{dup}_{i}"
     df.columns = cols
 
-    # --------------------------------------------------
-    # SESSION STATE FOR CLEANED DATA
-    # --------------------------------------------------
+    # -------------------------------
+    # SESSION STATE
+    # -------------------------------
     if "cleaned_df" not in st.session_state:
         st.session_state.cleaned_df = df.copy()
 
     df_cleaned = st.session_state.cleaned_df
 
-    # --------------------------------------------------
+    # ==================================================
     # SECTION 1 — Upload
-    # --------------------------------------------------
+    # ==================================================
     if section == "Upload Data":
-        st.subheader("Dataset Preview")
+
+        st.markdown('<div class="section-title">Dataset Preview</div>', unsafe_allow_html=True)
         st.dataframe(df_cleaned.head())
         st.write("Shape:", df_cleaned.shape)
         st.write("Columns:", df_cleaned.columns.tolist())
 
-    # --------------------------------------------------
-    # SECTION 2 — Overview
-    # --------------------------------------------------
+    # ==================================================
+    # SECTION 2 — Data Overview + Cleaning
+    # ==================================================
     if section == "Data Overview":
 
-        st.subheader("Data Types")
+        st.markdown('<div class="section-title">Data Types</div>', unsafe_allow_html=True)
         st.write(df_cleaned.dtypes)
 
-        st.subheader("Statistical Summary")
+        st.markdown('<div class="section-title">Statistical Summary</div>', unsafe_allow_html=True)
         st.write(df_cleaned.describe())
 
-        st.subheader("Missing Values")
-        st.dataframe(
-            df_cleaned.isnull().sum().reset_index()
-            .rename(columns={"index": "Column", 0: "Missing Values"})
+        # ---------------- Missing Values ----------------
+        st.markdown('<div class="section-title">Missing Values</div>', unsafe_allow_html=True)
+
+        missing = df_cleaned.isnull().sum()
+        missing_percent = (missing / len(df_cleaned)) * 100
+
+        missing_df = pd.DataFrame({
+            "Column": df_cleaned.columns,
+            "Missing Values": missing.values,
+            "Missing %": missing_percent.values.round(2)
+        })
+
+        st.dataframe(missing_df)
+
+        clean_option = st.selectbox(
+            "Select Missing Value Handling Method",
+            ["Fill with Mean", "Fill with Median", "Fill with Mode", "Drop Rows"]
         )
 
-        if st.button("Clean Missing Values"):
-            df_cleaned = df_cleaned.fillna(df_cleaned.mean(numeric_only=True))
-            df_cleaned = df_cleaned.fillna("Unknown")
-            st.session_state.cleaned_df = df_cleaned
-            st.success("Missing values cleaned successfully")
+        if st.button("Apply Cleaning"):
 
+            if clean_option == "Fill with Mean":
+                df_cleaned = df_cleaned.fillna(df_cleaned.mean(numeric_only=True))
+                df_cleaned = df_cleaned.fillna("Unknown")
+
+            elif clean_option == "Fill with Median":
+                df_cleaned = df_cleaned.fillna(df_cleaned.median(numeric_only=True))
+                df_cleaned = df_cleaned.fillna("Unknown")
+
+            elif clean_option == "Fill with Mode":
+                for col in df_cleaned.columns:
+                    df_cleaned[col] = df_cleaned[col].fillna(df_cleaned[col].mode()[0])
+
+            elif clean_option == "Drop Rows":
+                df_cleaned = df_cleaned.dropna()
+
+            st.session_state.cleaned_df = df_cleaned
+            st.success("Cleaning Applied Successfully")
+
+        # Download cleaned data
         cleaned_csv = df_cleaned.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="Download Cleaned Dataset",
@@ -109,9 +151,9 @@ if uploaded_file is not None:
             mime="text/csv"
         )
 
-    # --------------------------------------------------
+    # ==================================================
     # SECTION 3 — Visualization
-    # --------------------------------------------------
+    # ==================================================
     if section == "Visualization":
 
         numeric_cols = df_cleaned.select_dtypes(include=["int64", "float64"]).columns
@@ -127,7 +169,7 @@ if uploaded_file is not None:
             col3.metric("Min", round(df_cleaned[selected_col].min(), 2))
             col4.metric("Std Dev", round(df_cleaned[selected_col].std(), 2))
 
-            fig_line = px.line(df_cleaned, y=selected_col, title="Trend")
+            fig_line = px.line(df_cleaned, y=selected_col, title="Trend Analysis")
             st.plotly_chart(fig_line, use_container_width=True)
 
             fig_hist = px.histogram(df_cleaned, x=selected_col)
@@ -144,17 +186,8 @@ if uploaded_file is not None:
                 temp_df = df_cleaned[[x_col, y_col]].dropna()
 
                 if len(temp_df) > 0:
-                    fig_scatter = px.scatter(
-                        temp_df,
-                        x=x_col,
-                        y=y_col,
-                        title=f"{x_col} vs {y_col}"
-                    )
+                    fig_scatter = px.scatter(temp_df, x=x_col, y=y_col)
                     st.plotly_chart(fig_scatter, use_container_width=True)
-                else:
-                    st.warning("Not enough valid data for scatter plot.")
-            else:
-                st.info("Select two different columns.")
 
         if len(numeric_cols) > 1:
             st.subheader("Correlation Heatmap")
@@ -169,9 +202,9 @@ if uploaded_file is not None:
             fig_pie = px.pie(df_cleaned, names=cat_col)
             st.plotly_chart(fig_pie, use_container_width=True)
 
-    # --------------------------------------------------
+    # ==================================================
     # SECTION 4 — Forecasting
-    # --------------------------------------------------
+    # ==================================================
     if section == "Forecasting":
 
         numeric_cols = df_cleaned.select_dtypes(include=["int64", "float64"]).columns
@@ -211,19 +244,8 @@ if uploaded_file is not None:
                 fig = px.line(forecast, x="ds", y="yhat", title="Forecast Trend")
                 st.plotly_chart(fig, use_container_width=True)
 
-                st.subheader("Trend and Seasonality")
                 fig2 = model.plot_components(forecast)
                 st.pyplot(fig2)
-
-                forecast_csv = forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]]
-                csv = forecast_csv.to_csv(index=False).encode("utf-8")
-
-                st.download_button(
-                    label="Download Forecast CSV",
-                    data=csv,
-                    file_name="forecast_results.csv",
-                    mime="text/csv"
-                )
 
         else:
             st.warning("No valid time series structure found.")
@@ -231,10 +253,17 @@ if uploaded_file is not None:
 else:
     st.info("Upload dataset to begin.")
 
-# --------------------------------------------------
+# ==================================================
 # FOOTER
-# --------------------------------------------------
+# ==================================================
 st.markdown("---")
-st.markdown("Website made by Aditya Yadav")
-st.markdown("Contact Number: 6306512207")
-st.markdown("Email: adityadav757@gmail.com")
+st.markdown(
+    """
+    <div style='text-align:center; font-size:15px; padding:10px;'>
+        <b>Aditya Yadav</b> &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;
+        📞 6306512207 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;
+        ✉ adityadav757@gmail.com
+    </div>
+    """,
+    unsafe_allow_html=True
+)
