@@ -119,48 +119,96 @@ else:
         st.write("Shape:", df_cleaned.shape)
         st.write("Columns:", df_cleaned.columns.tolist())
 
-    # ==================================================
-    # SECTION 2 — Data Overview
-    # ==================================================
-    if section == "Data Overview":
+  # ==================================================
+# SECTION 2 — Data Overview + Cleaning
+# ==================================================
+st.info(f"Current Dataset Shape: {df_cleaned.shape}")
 
-        st.markdown('<div class="section-title">Data Types</div>', unsafe_allow_html=True)
+if section == "Data Overview":
+
+    st.markdown('<div class="section-title">Current Data Overview</div>', unsafe_allow_html=True)
+
+    # Show Current Data Info
+    st.subheader("Data Types")
+    st.write(df_cleaned.dtypes)
+
+    st.subheader("Statistical Summary")
+    st.write(df_cleaned.describe())
+
+    # ---------------- Missing Values ----------------
+    missing = df_cleaned.isnull().sum()
+    missing_percent = (missing / len(df_cleaned)) * 100
+
+    missing_df = pd.DataFrame({
+        "Column": df_cleaned.columns,
+        "Missing Values": missing.values,
+        "Missing %": missing_percent.values.round(2)
+    })
+
+    st.subheader("Missing Values")
+    st.dataframe(missing_df)
+
+    # ---------------- Cleaning Option ----------------
+    st.markdown("---")
+    st.subheader("Apply Data Cleaning")
+
+    clean_option = st.selectbox(
+        "Select Missing Value Handling Method",
+        ["Fill with Mean", "Fill with Median", "Fill with Mode", "Drop Rows"]
+    )
+
+    if st.button("Apply Cleaning"):
+
+        temp_df = df_cleaned.copy()
+
+        if clean_option == "Fill with Mean":
+            temp_df = temp_df.fillna(temp_df.mean(numeric_only=True))
+
+        elif clean_option == "Fill with Median":
+            temp_df = temp_df.fillna(temp_df.median(numeric_only=True))
+
+        elif clean_option == "Fill with Mode":
+            for col in temp_df.columns:
+                temp_df[col] = temp_df[col].fillna(temp_df[col].mode()[0])
+
+        elif clean_option == "Drop Rows":
+            temp_df = temp_df.dropna()
+
+        # Update Session State
+        st.session_state.cleaned_df = temp_df
+        df_cleaned = temp_df
+
+        st.success("Cleaning Applied Successfully!")
+
+        # Show Updated Overview Immediately
+        st.markdown("## Updated Cleaned Data Overview")
+
+        st.subheader("Updated Data Types")
         st.write(df_cleaned.dtypes)
 
-        st.markdown('<div class="section-title">Statistical Summary</div>', unsafe_allow_html=True)
+        st.subheader("Updated Statistical Summary")
         st.write(df_cleaned.describe())
 
-        missing = df_cleaned.isnull().sum()
-        missing_percent = (missing / len(df_cleaned)) * 100
+        updated_missing = df_cleaned.isnull().sum()
+        updated_missing_percent = (updated_missing / len(df_cleaned)) * 100
 
-        missing_df = pd.DataFrame({
+        updated_missing_df = pd.DataFrame({
             "Column": df_cleaned.columns,
-            "Missing Values": missing.values,
-            "Missing %": missing_percent.values.round(2)
+            "Missing Values": updated_missing.values,
+            "Missing %": updated_missing_percent.values.round(2)
         })
 
-        st.markdown('<div class="section-title">Missing Values</div>', unsafe_allow_html=True)
-        st.dataframe(missing_df)
+        st.subheader("Updated Missing Values")
+        st.dataframe(updated_missing_df)
 
-        clean_option = st.selectbox(
-            "Missing Value Handling",
-            ["Fill Mean", "Fill Median", "Fill Mode", "Drop Rows"]
+        # Download Cleaned Data
+        cleaned_csv = df_cleaned.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="Download Cleaned Dataset",
+            data=cleaned_csv,
+            file_name="cleaned_dataset.csv",
+            mime="text/csv"
         )
-
-        if st.button("Apply Cleaning"):
-
-            if clean_option == "Fill Mean":
-                df_cleaned = df_cleaned.fillna(df_cleaned.mean(numeric_only=True))
-            elif clean_option == "Fill Median":
-                df_cleaned = df_cleaned.fillna(df_cleaned.median(numeric_only=True))
-            elif clean_option == "Fill Mode":
-                for col in df_cleaned.columns:
-                    df_cleaned[col] = df_cleaned[col].fillna(df_cleaned[col].mode()[0])
-            elif clean_option == "Drop Rows":
-                df_cleaned = df_cleaned.dropna()
-
-            st.session_state.cleaned_df = df_cleaned
-            st.success("Cleaning Applied Successfully")
 
     # ==================================================
     # SECTION 3 — Visualization
