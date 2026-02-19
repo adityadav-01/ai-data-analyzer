@@ -47,7 +47,7 @@ st.markdown("""
 # --------------------------------------------------
 # HEADER (Always Visible)
 # --------------------------------------------------
-st.markdown('<div class="welcome-title">Welcome to Our AI Data Analyzer</div>', unsafe_allow_html=True)
+st.markdown('<div class="welcome-title"> AI Data Analyzer</div>', unsafe_allow_html=True)
 st.markdown("---")
 
 # --------------------------------------------------
