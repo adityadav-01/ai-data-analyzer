@@ -103,13 +103,98 @@ else:
     df_cleaned = st.session_state.cleaned_df
 
     # ==================================================
-    # SECTION 1 — Upload
+    # SECTION 1 — Upload Data
     # ==================================================
     if section == "Upload Data":
-        st.markdown('<div class="section-title">Dataset Preview</div>', unsafe_allow_html=True)
+
+        # --------------------------------------------------
+        # INTRO CARDS (Visible Only on Upload Page)
+        # --------------------------------------------------
+
+        st.markdown("""
+        <style>
+        .info-box {
+            padding:20px;
+            border-radius:12px;
+            background: rgba(0, 201, 255, 0.08);
+            border: 1px solid rgba(0, 201, 255, 0.3);
+            margin-bottom:20px;
+            transition: 0.3s;
+        }
+        .info-box:hover {
+            transform: translateY(-5px);
+            border: 1px solid #00C9FF;
+        }
+        .info-title {
+            font-size:18px;
+            font-weight:600;
+            margin-bottom:8px;
+        }
+        .info-text {
+            font-size:14px;
+            color:#CCCCCC;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        st.markdown("## 🚀 Smart Data. Smart Decisions.")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.markdown("""
+            <div class="info-box">
+                <div class="info-title">📊 What This App Does</div>
+                <div class="info-text">
+                Cleans your data, generates powerful visual insights,
+                and performs AI-based forecasting automatically.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col2:
+            st.markdown("""
+            <div class="info-box">
+                <div class="info-title">📁 Minimum Requirements</div>
+                <div class="info-text">
+                ✔ At least 1 numeric column  
+                ✔ Date + numeric column for forecasting  
+                ✔ 20+ rows recommended
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col3:
+            st.markdown("""
+            <div class="info-box">
+                <div class="info-title">⚙️ How It Works</div>
+                <div class="info-text">
+                Upload → Clean → Visualize → Forecast  
+                Powered by Pandas & AI.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # --------------------------------------------------
+        # DATASET PREVIEW
+        # --------------------------------------------------
+
+        st.markdown('<div class="section-title">📄 Dataset Preview</div>', unsafe_allow_html=True)
+
         st.dataframe(df_cleaned.head())
-        st.write("Shape:", df_cleaned.shape)
-        st.write("Columns:", df_cleaned.columns.tolist())
+
+        colA, colB = st.columns(2)
+
+        with colA:
+            st.info(f"📌 Dataset Shape: {df_cleaned.shape}")
+
+        with colB:
+            st.info(f"📌 Total Columns: {len(df_cleaned.columns)}")
+
+        st.write("Columns List:", df_cleaned.columns.tolist())
+
 
     # ==================================================
     # SECTION 2 — Data Overview + Cleaning
