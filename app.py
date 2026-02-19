@@ -70,9 +70,74 @@ uploaded_file = st.sidebar.file_uploader(
 # IF NO FILE UPLOADED
 # --------------------------------------------------
 if uploaded_file is None:
-    st.info("👈 Upload a dataset to activate analysis features.")
+
+    st.markdown("""
+    <style>
+    .info-box {
+        padding:20px;
+        border-radius:12px;
+        background: rgba(0, 201, 255, 0.08);
+        border: 1px solid rgba(0, 201, 255, 0.3);
+        margin-bottom:20px;
+        transition: 0.3s;
+    }
+    .info-box:hover {
+        transform: translateY(-5px);
+        border: 1px solid #00C9FF;
+    }
+    .info-title {
+        font-size:18px;
+        font-weight:600;
+        margin-bottom:8px;
+    }
+    .info-text {
+        font-size:14px;
+        color:#CCCCCC;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("## 🚀 Smart Data. Smart Decisions.")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="info-box">
+            <div class="info-title">📊 What This App Does</div>
+            <div class="info-text">
+            Cleans your data, generates powerful visual insights,
+            and performs AI-based forecasting automatically.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="info-box">
+            <div class="info-title">📁 Minimum Requirements</div>
+            <div class="info-text">
+            ✔ At least 1 numeric column  
+            ✔ Date + numeric column for forecasting  
+            ✔ 20+ rows recommended
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="info-box">
+            <div class="info-title">⚙️ How It Works</div>
+            <div class="info-text">
+            Upload → Clean → Visualize → Forecast  
+            Powered by Pandas & AI.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.info("👈 Upload a dataset to activate analysis features.")
 
 else:
+
 
     # -------------------------------
     # SAFE FILE READING
@@ -106,77 +171,6 @@ else:
     # SECTION 1 — Upload Data
     # ==================================================
     if section == "Upload Data":
-
-        # --------------------------------------------------
-        # INTRO CARDS (Visible Only on Upload Page)
-        # --------------------------------------------------
-
-        st.markdown("""
-        <style>
-        .info-box {
-            padding:20px;
-            border-radius:12px;
-            background: rgba(0, 201, 255, 0.08);
-            border: 1px solid rgba(0, 201, 255, 0.3);
-            margin-bottom:20px;
-            transition: 0.3s;
-        }
-        .info-box:hover {
-            transform: translateY(-5px);
-            border: 1px solid #00C9FF;
-        }
-        .info-title {
-            font-size:18px;
-            font-weight:600;
-            margin-bottom:8px;
-        }
-        .info-text {
-            font-size:14px;
-            color:#CCCCCC;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-        st.markdown("## 🚀 Smart Data. Smart Decisions.")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.markdown("""
-            <div class="info-box">
-                <div class="info-title">📊 What This App Does</div>
-                <div class="info-text">
-                Cleans your data, generates powerful visual insights,
-                and performs AI-based forecasting automatically.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col2:
-            st.markdown("""
-            <div class="info-box">
-                <div class="info-title">📁 Minimum Requirements</div>
-                <div class="info-text">
-                ✔ At least 1 numeric column  
-                ✔ Date + numeric column for forecasting  
-                ✔ 20+ rows recommended
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col3:
-            st.markdown("""
-            <div class="info-box">
-                <div class="info-title">⚙️ How It Works</div>
-                <div class="info-text">
-                Upload → Clean → Visualize → Forecast  
-                Powered by Pandas & AI.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("---")
-
         # --------------------------------------------------
         # DATASET PREVIEW
         # --------------------------------------------------
