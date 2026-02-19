@@ -34,9 +34,19 @@ uploaded_file = st.sidebar.file_uploader(
 # --------------------------------------------------
 if uploaded_file is not None:
 
-    # Read dataset
+    # --------------------------------------------------
+    # SAFE DATA READING (Handles Encoding Errors)
+    # --------------------------------------------------
     if uploaded_file.name.endswith(".csv"):
-        df = pd.read_csv(uploaded_file)
+        try:
+            df = pd.read_csv(uploaded_file, encoding="utf-8")
+        except UnicodeDecodeError:
+            uploaded_file.seek(0)
+            try:
+                df = pd.read_csv(uploaded_file, encoding="latin1")
+            except:
+                uploaded_file.seek(0)
+                df = pd.read_csv(uploaded_file, encoding="ISO-8859-1")
     else:
         df = pd.read_excel(uploaded_file)
 
@@ -123,7 +133,6 @@ if uploaded_file is not None:
             fig_hist = px.histogram(df_cleaned, x=selected_col)
             st.plotly_chart(fig_hist, use_container_width=True)
 
-        # SAFE SCATTER (NO OLS)
         if len(numeric_cols) > 1:
 
             st.subheader("Scatter Plot")
