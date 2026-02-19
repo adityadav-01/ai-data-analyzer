@@ -29,14 +29,6 @@ st.markdown("""
     animation: fadeSlide 1.5s ease-in-out;
 }
 
-.welcome-sub {
-    text-align: center;
-    font-size: 18px;
-    color: #CCCCCC;
-    margin-bottom: 30px;
-    animation: fadeSlide 2s ease-in-out;
-}
-
 @keyframes fadeSlide {
     from {opacity: 0; transform: translateY(-20px);}
     to {opacity: 1; transform: translateY(0);}
@@ -56,8 +48,6 @@ st.markdown("""
 # HEADER (Always Visible)
 # --------------------------------------------------
 st.markdown('<div class="welcome-title">Welcome to Our AI Data Analyzer</div>', unsafe_allow_html=True)
-
-
 st.markdown("---")
 
 # --------------------------------------------------
@@ -119,101 +109,93 @@ else:
         st.write("Shape:", df_cleaned.shape)
         st.write("Columns:", df_cleaned.columns.tolist())
 
-  # ==================================================
-# SECTION 2 — Data Overview + Cleaning
-# ==================================================
-st.info(f"Current Dataset Shape: {df_cleaned.shape}")
+    # ==================================================
+    # SECTION 2 — Data Overview + Cleaning
+    # ==================================================
+    elif section == "Data Overview":
 
-if section == "Data Overview":
+        st.info(f"Current Dataset Shape: {df_cleaned.shape}")
 
-    st.markdown('<div class="section-title">Current Data Overview</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Current Data Overview</div>', unsafe_allow_html=True)
 
-    # Show Current Data Info
-    st.subheader("Data Types")
-    st.write(df_cleaned.dtypes)
-
-    st.subheader("Statistical Summary")
-    st.write(df_cleaned.describe())
-
-    # ---------------- Missing Values ----------------
-    missing = df_cleaned.isnull().sum()
-    missing_percent = (missing / len(df_cleaned)) * 100
-
-    missing_df = pd.DataFrame({
-        "Column": df_cleaned.columns,
-        "Missing Values": missing.values,
-        "Missing %": missing_percent.values.round(2)
-    })
-
-    st.subheader("Missing Values")
-    st.dataframe(missing_df)
-
-    # ---------------- Cleaning Option ----------------
-    st.markdown("---")
-    st.subheader("Apply Data Cleaning")
-
-    clean_option = st.selectbox(
-        "Select Missing Value Handling Method",
-        ["Fill with Mean", "Fill with Median", "Fill with Mode", "Drop Rows"]
-    )
-
-    if st.button("Apply Cleaning"):
-
-        temp_df = df_cleaned.copy()
-
-        if clean_option == "Fill with Mean":
-            temp_df = temp_df.fillna(temp_df.mean(numeric_only=True))
-
-        elif clean_option == "Fill with Median":
-            temp_df = temp_df.fillna(temp_df.median(numeric_only=True))
-
-        elif clean_option == "Fill with Mode":
-            for col in temp_df.columns:
-                temp_df[col] = temp_df[col].fillna(temp_df[col].mode()[0])
-
-        elif clean_option == "Drop Rows":
-            temp_df = temp_df.dropna()
-
-        # Update Session State
-        st.session_state.cleaned_df = temp_df
-        df_cleaned = temp_df
-
-        st.success("Cleaning Applied Successfully!")
-
-        # Show Updated Overview Immediately
-        st.markdown("## Updated Cleaned Data Overview")
-
-        st.subheader("Updated Data Types")
+        st.subheader("Data Types")
         st.write(df_cleaned.dtypes)
 
-        st.subheader("Updated Statistical Summary")
+        st.subheader("Statistical Summary")
         st.write(df_cleaned.describe())
 
-        updated_missing = df_cleaned.isnull().sum()
-        updated_missing_percent = (updated_missing / len(df_cleaned)) * 100
+        # Missing Values
+        missing = df_cleaned.isnull().sum()
+        missing_percent = (missing / len(df_cleaned)) * 100
 
-        updated_missing_df = pd.DataFrame({
+        missing_df = pd.DataFrame({
             "Column": df_cleaned.columns,
-            "Missing Values": updated_missing.values,
-            "Missing %": updated_missing_percent.values.round(2)
+            "Missing Values": missing.values,
+            "Missing %": missing_percent.values.round(2)
         })
 
-        st.subheader("Updated Missing Values")
-        st.dataframe(updated_missing_df)
+        st.subheader("Missing Values")
+        st.dataframe(missing_df)
 
-        # Download Cleaned Data
-        cleaned_csv = df_cleaned.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="Download Cleaned Dataset",
-            data=cleaned_csv,
-            file_name="cleaned_dataset.csv",
-            mime="text/csv"
+        st.markdown("---")
+        st.subheader("Apply Data Cleaning")
+
+        clean_option = st.selectbox(
+            "Select Missing Value Handling Method",
+            ["Fill with Mean", "Fill with Median", "Fill with Mode", "Drop Rows"]
         )
+
+        if st.button("Apply Cleaning"):
+
+            temp_df = df_cleaned.copy()
+
+            if clean_option == "Fill with Mean":
+                temp_df = temp_df.fillna(temp_df.mean(numeric_only=True))
+            elif clean_option == "Fill with Median":
+                temp_df = temp_df.fillna(temp_df.median(numeric_only=True))
+            elif clean_option == "Fill with Mode":
+                for col in temp_df.columns:
+                    temp_df[col] = temp_df[col].fillna(temp_df[col].mode()[0])
+            elif clean_option == "Drop Rows":
+                temp_df = temp_df.dropna()
+
+            st.session_state.cleaned_df = temp_df
+            df_cleaned = temp_df
+
+            st.success("Cleaning Applied Successfully!")
+
+            st.markdown("## Updated Cleaned Data Overview")
+
+            st.subheader("Updated Data Types")
+            st.write(df_cleaned.dtypes)
+
+            st.subheader("Updated Statistical Summary")
+            st.write(df_cleaned.describe())
+
+            updated_missing = df_cleaned.isnull().sum()
+            updated_missing_percent = (updated_missing / len(df_cleaned)) * 100
+
+            updated_missing_df = pd.DataFrame({
+                "Column": df_cleaned.columns,
+                "Missing Values": updated_missing.values,
+                "Missing %": updated_missing_percent.values.round(2)
+            })
+
+            st.subheader("Updated Missing Values")
+            st.dataframe(updated_missing_df)
+
+            cleaned_csv = df_cleaned.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="Download Cleaned Dataset",
+                data=cleaned_csv,
+                file_name="cleaned_dataset.csv",
+                mime="text/csv"
+            )
 
     # ==================================================
     # SECTION 3 — Visualization
     # ==================================================
-    if section == "Visualization":
+    elif section == "Visualization":
 
         numeric_cols = df_cleaned.select_dtypes(include=["int64", "float64"]).columns
 
@@ -235,7 +217,7 @@ if section == "Data Overview":
     # ==================================================
     # SECTION 4 — Forecasting
     # ==================================================
-    if section == "Forecasting":
+    elif section == "Forecasting":
 
         numeric_cols = df_cleaned.select_dtypes(include=["int64", "float64"]).columns
 
@@ -258,10 +240,7 @@ if section == "Data Overview":
                 df_forecast[date_col] = pd.to_datetime(df_forecast[date_col], errors="coerce")
                 df_forecast = df_forecast.dropna()
 
-                df_forecast = df_forecast.rename(columns={
-                    date_col: "ds",
-                    target_col: "y"
-                }).sort_values("ds")
+                df_forecast = df_forecast.rename(columns={date_col: "ds", target_col: "y"}).sort_values("ds")
 
                 split_index = int(len(df_forecast) * 0.8)
                 train = df_forecast.iloc[:split_index]
