@@ -5,6 +5,8 @@ import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
 from prophet import Prophet
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
 
 # --------------------------------------------------
 # PAGE CONFIG
@@ -235,11 +237,56 @@ if uploaded_file is not None:
                     target_col: "y"
                 }).sort_values("ds")
 
-                model = Prophet()
-                model.fit(df_forecast)
+# ---------------- Train Test Split ----------------
+split_index = int(len(df_forecast) * 0.8)
+train = df_forecast.iloc[:split_index]
+test = df_forecast.iloc[split_index:]
 
-                future = model.make_future_dataframe(periods=730)
-                forecast = model.predict(future)
+model = Prophet()
+model.fit(train)
+
+future = model.make_future_dataframe(periods=len(test))
+forecast = model.predict(future)
+
+# ---------------- Performance Calculation ----------------
+predicted = forecast.iloc[-len(test):]["yhat"].values
+actual = test["y"].values
+
+mae = mean_absolute_error(actual, predicted)
+rmse = np.sqrt(mean_squared_error(actual, predicted))
+r2 = r2_score(actual, predicted)
+
+st.subheader("Model Accuracy")
+
+col1, col2, col3 = st.columns(3)
+col1.metric("MAE", round(mae, 2))
+col2.metric("RMSE", round(rmse, 2))
+col3.metric("R² Score", round(r2, 3))
+
+# ---------------- Short Performance Message ----------------
+if r2 >= 0.9:
+    message = "Your model is Excellent"
+elif r2 >= 0.75:
+    message = "Your model is Good"
+elif r2 >= 0.5:
+    message = "Your model is Moderate"
+elif r2 >= 0:
+    message = "Your model is Weak"
+else:
+    message = "Your model is Poor"
+
+st.success(message)
+
+# ---------------- Final Forecast Plot (2 Years) ----------------
+future_full = model.make_future_dataframe(periods=730)
+forecast_full = model.predict(future_full)
+
+fig = px.line(forecast_full, x="ds", y="yhat", title="Forecast Trend")
+st.plotly_chart(fig, use_container_width=True)
+
+fig2 = model.plot_components(forecast_full)
+st.pyplot(fig2)
+
 
                 fig = px.line(forecast, x="ds", y="yhat", title="Forecast Trend")
                 st.plotly_chart(fig, use_container_width=True)
