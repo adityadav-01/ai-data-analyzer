@@ -97,14 +97,14 @@ if uploaded_file is None:
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("## 🚀 Smart Data. Smart Decisions.")
+    st.markdown("## Smart Data. Smart Decisions.")
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown("""
         <div class="info-box">
-            <div class="info-title">📊 What This App Does</div>
+            <div class="info-title"> What This App Does</div>
             <div class="info-text">
             Cleans your data, generates powerful visual insights,
             and performs AI-based forecasting automatically.
@@ -115,7 +115,7 @@ if uploaded_file is None:
     with col2:
         st.markdown("""
         <div class="info-box">
-            <div class="info-title">📁 Minimum Requirements</div>
+            <div class="info-title"> Minimum Requirements</div>
             <div class="info-text">
             ✔ At least 1 numeric column  
             ✔ Date + numeric column for forecasting  
@@ -134,7 +134,7 @@ if uploaded_file is None:
             </div>
         </div>
         """, unsafe_allow_html=True)
-        st.info("👈 Upload a dataset to activate analysis features.")
+    st.info("👈 Upload a dataset to activate analysis features.")
 
 else:
 
