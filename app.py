@@ -51,6 +51,58 @@ st.markdown('<div class="welcome-title">Welcome to Our AI Data Analyzer</div>', 
 st.markdown("---")
 
 # --------------------------------------------------
+# INTRODUCTION SECTION
+# --------------------------------------------------
+
+st.markdown("## About This Application")
+
+st.markdown("""
+Welcome to the AI Data Analyzer Web Application.
+
+This platform allows you to upload any structured CSV or Excel dataset and perform:
+
+• Data Cleaning  
+• Statistical Analysis  
+• Advanced Visualizations  
+• Correlation Analysis  
+• AI-Based Time Series Forecasting  
+
+The system automatically adapts to your dataset structure.
+""")
+
+st.markdown("---")
+
+st.markdown("## Minimum Dataset Requirements")
+
+st.markdown("""
+### 🔹 For Data Analysis & Visualization:
+• At least **one numeric column** (int or float)  
+• Categorical columns are optional but recommended  
+
+### 🔹 For Forecasting:
+• One **Date column** (YYYY-MM-DD format preferred)  
+• One **Numeric column** for prediction  
+• At least 20–30 records recommended  
+• Data should follow a consistent time interval (daily, monthly, yearly)
+""")
+
+st.markdown("---")
+
+st.markdown("## 🚀 How It Works")
+
+st.markdown("""
+1️ Upload your dataset from the sidebar  
+2️ Review and clean missing values  
+3️ Explore visualizations  
+4️ Generate AI-based forecast (if time-series data exists)  
+
+The system uses Pandas for data processing, Plotly for visualization, and Prophet for forecasting.
+""")
+
+st.markdown("---")
+
+
+# --------------------------------------------------
 # SIDEBAR
 # --------------------------------------------------
 st.sidebar.title("Navigation")
